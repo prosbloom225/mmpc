@@ -1,2 +1,4 @@
 all:
-	gcc -Wall -g client.c -o client
+	gcc -g -o mmpc client.c /usr/local/lib/libmpdclient.a -lncurses -lpanel -lreadline /usr/local/lib/libreadline.a
+clean:
+	rm *.exe

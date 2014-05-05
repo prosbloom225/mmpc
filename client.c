@@ -1,90 +1,163 @@
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
+#include <ncurses.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <panel.h>
 #include <stdlib.h>
-#include "include/client.h"
+#include <unistd.h>
+#include <mpd/client.h>
+#include <string.h>
 
-/* global variables */
-struct mpd_connection *connection = NULL;
-const char *MPD_HOST = "127.0.0.1";
-const int MPD_PORT = 6600;
-const int MPD_TIMEOUT = 1600;
+#define Nrows 10
+#define NCOLS 40
 
-/**
- * mpd_status
- * print the now playing information
- */
-char *
-mpd_status()
-{
-        struct mpd_status *status = NULL;
-        struct mpd_song *song = NULL;
-        char *buf = calloc(256, sizeof(char));
-        char *state;
-        bool fetch_song = true;
+// HEADER
+void printToWindow(WINDOW *win, int starty, int startx, int width, char *string, chtype color); 	
+int connectToMpd(); 
+// END HEADER
 
-        /* connect if there is no connection */
-        if (!connection)
-                connection = mpd_connection_new(MPD_HOST, MPD_PORT, MPD_TIMEOUT);
 
-        /* get status */
-        status = mpd_run_status(connection);
-        /* attempt to reconnect if status call failed */
-        if (!status)
-        {
-                mpd_connection_free(connection);
-                connection = mpd_connection_new(MPD_HOST, MPD_PORT, MPD_TIMEOUT);
-                status = mpd_run_status(connection);
-                /* if reconnection failed, error out */
-                if (!status)
-                {
-                        strncat(buf, "no connection ", 249);
-                        return buf;
-                }
-        }
+// DATA SEGMENT
+	WINDOW *clientWins[3];
+	PANEL  *clientPanels[3];
+	int rows, cols, x = 0, y = 0;
+	static void cb_linehandler (char *);
+	int running;
+	const char *prompt = "rltest$ ";
+// END DATA SEGMENT
+static void
+cb_linehandler (char *line) {
+  /* Can use ^D (stty eof) or `exit' to exit. */
+  if (line == NULL || strcmp (line, "exit") == 0)
+    {
+      if (line == 0)
+        printf ("\n");
+      printf ("exit\n");
+      /* This function needs to be called to reset the terminal settings,
+         and calling it from the line handler keeps one extra prompt from
+         being displayed. */
+      rl_callback_handler_remove ();
 
-        /* get play state */
-        enum mpd_state playstate = mpd_status_get_state(status);
-        if (playstate == MPD_STATE_STOP)
-        {
-                if (fields[P_MPD_STOP])
-                        state = (char *)fields[P_MPD_STOP];
-                else
-                        state = "stopped";
-                fetch_song = false;
-        }
-        else if (playstate == MPD_STATE_PAUSE)
-        {
-                if (fields[P_MPD_PAUSE])
-                        state = (char *)fields[P_MPD_PAUSE];
-                else
-                        state = "paused:";
-        }
-        else if (playstate == MPD_STATE_PLAY)
-        {
-                if (fields[P_MPD_PLAY])
-                        state = (char *)fields[P_MPD_PLAY];
-                else
-                        state = "playing:";
-        }
-        else
-        {
-                state = "?";
-                fetch_song = false;
-        }
-        mpd_status_free(status);
+      running = 0;
+    }
+  else
+    {
+      if (*line)
+        add_history (line);
+      //printf ("input line: %s\n", line);
+      printToWindow(clientWins[0], 1, 1, 20, line, COLOR_PAIR(1));
+      free (line);
+    }
+}
 
-        /* get song */
-        if (fetch_song)
-        {
-                song = mpd_run_current_song(connection);
-                const char *title = mpd_song_get_tag(song, MPD_TAG_TITLE, 0);
-                const char *artist = mpd_song_get_tag(song, MPD_TAG_ARTIST, 0);
-                snprintf(buf, 256, "%s %s: %s ", state, artist, title);
-                mpd_song_free(song);
-        }
-        else
-                snprintf(buf, 256, "%s", state);
+int main() {
 
-        return buf;
+	initscr();
+	getmaxyx(stdscr,rows,cols);
+	cbreak();
+	//noecho();
+
+	clientWins[0] = newwin(rows/4, cols-2, y, x);
+	clientWins[1] = newwin((rows/4)*3, (cols-2)/3, y + (rows/4), x);
+	clientWins[2] = newwin((rows/4)*3, ((cols-2)/3)*2, y + (rows/4), x + (cols-2)/3);
+	
+	// Create panels
+	clientPanels[0] = new_panel(clientWins[0]);
+	clientPanels[1] = new_panel(clientWins[1]);
+	clientPanels[2] = new_panel(clientWins[2]);
+
+	// Prettify
+	box(clientWins[0], 0, 0);
+	box(clientWins[1], 0, 0);
+	box(clientWins[2], 0, 0);
+
+	update_panels();
+	doupdate();
+
+	printToWindow(clientWins[0], 0, 0, 20, "Viz", COLOR_PAIR(1));
+	printToWindow(clientWins[1], 0, 0, 20, "Library", COLOR_PAIR(1));
+	printToWindow(clientWins[2], 0, 0, 20, "Playlist", COLOR_PAIR(1));
+
+
+	//printToWindow(clientWins[0], 1, 1, 20, "test", COLOR_PAIR(1));
+
+	//commandMode();
+
+	
+	mvwprintw(clientWins[1], 1, 1, "aTest");
+	mvwprintw(clientWins[2], 1, 1, "bTest");
+	wrefresh(clientWins[1]);
+
+	keypad(stdscr, true);
+	fd_set fds;
+	int r;
+	rl_callback_handler_install(">", cb_linehandler);
+
+	running = 1;
+	while (running)
+	{
+		FD_ZERO (&fds);
+		r = select (FD_SETSIZE, &fds, NULL, NULL, NULL);
+		if (r<0)
+		{
+			perror("rltest: select");
+			rl_callback_handler_remove();
+			break;
+		}
+		if (FD_ISSET (fileno (rl_instream), &fds))
+		{
+			rl_callback_read_char();
+			//printToWindow(clientWins[0], 1, 1, 20, "TEST", COLOR_PAIR(1));
+		}
+	}
+
+	//printToWindow(clientWins[0], 1, 1, 20, rl_line_buffer, COLOR_PAIR(1));
+
+
+	// Pause
+	getch();
+	endwin();
+	return 0;
+}
+
+
+void printToWindow(WINDOW *win, int starty, int startx, int width, char *string, chtype color) {	
+	int length, x, y;
+	float temp;
+
+	if(win == NULL)
+		win = stdscr;
+	getyx(win, y, x);
+	if(startx != 0)
+		x = startx;
+	if(starty != 0)
+		y = starty;
+	if(width == 0)
+		width = 80;
+
+	length = strlen(string);
+	temp = (width - length)/ 2;
+	x = startx + (int)temp;
+	wattron(win, color);
+	mvwprintw(win, y, x, "%s", string);
+	wattroff(win, color);
+	update_panels();
+	refresh();
+}
+int connectToMpd() {
+	struct mpd_connection * conn;
+	conn = mpd_connection_new ("localhost", 6600, 0);
+
+    if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) 
+    {
+		mpd_connection_free(conn);
+		printf("Connection failed.\n");
+    }
+    else
+    {
+	    printf("Connection established.\n");
+    }
+
+
+	printf("End\n");
+	return 0;
 }
