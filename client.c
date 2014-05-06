@@ -1,3 +1,22 @@
+/*
+ * =====================================================================================
+ *
+ *       Filename:  client.c
+ *
+ *    Description:  :
+ *
+ *        Version:  1.0
+ *        Created:  05/05/2014 20:01:34
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  Michael Osiecki
+ *   Organization:  
+ *
+ * =====================================================================================
+ */
+
+
 #include <ncurses.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -6,6 +25,8 @@
 #include <unistd.h>
 #include <mpd/client.h>
 #include <string.h>
+
+#include "commandMode.h"
 
 #define Nrows 10
 #define NCOLS 40
@@ -19,35 +40,12 @@ int connectToMpd();
 // DATA SEGMENT
 	WINDOW *clientWins[3];
 	PANEL  *clientPanels[3];
+	WINDOW *winCommandMode;
+	PANEL *panelCommandMode;
 	int rows, cols, x = 0, y = 0;
-	static void cb_linehandler (char *);
 	int running;
 	const char *prompt = "rltest$ ";
 // END DATA SEGMENT
-static void
-cb_linehandler (char *line) {
-  /* Can use ^D (stty eof) or `exit' to exit. */
-  if (line == NULL || strcmp (line, "exit") == 0)
-    {
-      if (line == 0)
-        printf ("\n");
-      printf ("exit\n");
-      /* This function needs to be called to reset the terminal settings,
-         and calling it from the line handler keeps one extra prompt from
-         being displayed. */
-      rl_callback_handler_remove ();
-
-      running = 0;
-    }
-  else
-    {
-      if (*line)
-        add_history (line);
-      //printf ("input line: %s\n", line);
-      printToWindow(clientWins[0], 1, 1, 20, line, COLOR_PAIR(1));
-      free (line);
-    }
-}
 
 int main() {
 
@@ -57,18 +55,20 @@ int main() {
 	//noecho();
 
 	clientWins[0] = newwin(rows/4, cols-2, y, x);
-	clientWins[1] = newwin((rows/4)*3, (cols-2)/3, y + (rows/4), x);
-	clientWins[2] = newwin((rows/4)*3, ((cols-2)/3)*2, y + (rows/4), x + (cols-2)/3);
-	
+	clientWins[1] = newwin(((rows/4)*3)-1, (cols-2)/3, y + (rows/4), x);
+	clientWins[2] = newwin(((rows/4)*3)-1, ((cols-2)/3)*2, y + (rows/4), x + (cols-2)/3);
+	winCommandMode = newwin(1, cols, rows-1, 0);
 	// Create panels
 	clientPanels[0] = new_panel(clientWins[0]);
 	clientPanels[1] = new_panel(clientWins[1]);
 	clientPanels[2] = new_panel(clientWins[2]);
+	panelCommandMode = new_panel(winCommandMode);
 
 	// Prettify
 	box(clientWins[0], 0, 0);
 	box(clientWins[1], 0, 0);
 	box(clientWins[2], 0, 0);
+	//box(winCommandMode, 0, 0);
 
 	update_panels();
 	doupdate();
@@ -77,40 +77,13 @@ int main() {
 	printToWindow(clientWins[1], 0, 0, 20, "Library", COLOR_PAIR(1));
 	printToWindow(clientWins[2], 0, 0, 20, "Playlist", COLOR_PAIR(1));
 
-
-	//printToWindow(clientWins[0], 1, 1, 20, "test", COLOR_PAIR(1));
-
-	//commandMode();
-
 	
-	mvwprintw(clientWins[1], 1, 1, "aTest");
 	mvwprintw(clientWins[2], 1, 1, "bTest");
 	wrefresh(clientWins[1]);
 
-	keypad(stdscr, true);
-	fd_set fds;
-	int r;
-	rl_callback_handler_install(">", cb_linehandler);
+	openCommandMode(winCommandMode);
 
-	running = 1;
-	while (running)
-	{
-		FD_ZERO (&fds);
-		r = select (FD_SETSIZE, &fds, NULL, NULL, NULL);
-		if (r<0)
-		{
-			perror("rltest: select");
-			rl_callback_handler_remove();
-			break;
-		}
-		if (FD_ISSET (fileno (rl_instream), &fds))
-		{
-			rl_callback_read_char();
-			//printToWindow(clientWins[0], 1, 1, 20, "TEST", COLOR_PAIR(1));
-		}
-	}
 
-	//printToWindow(clientWins[0], 1, 1, 20, rl_line_buffer, COLOR_PAIR(1));
 
 
 	// Pause
