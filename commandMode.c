@@ -21,31 +21,38 @@
 #include "commandMode.h"
 
 int running;
+int rows, cols;
+void cb_linehandler(char* line);
 
-void openCommandMode(WINDOW *window)
-{
-	keypad(stdscr, true);
-	int rows, cols;
+void openCommandMode(WINDOW *window) {
+	//keypad(stdscr, true);
 	getmaxyx(stdscr, rows, cols);
-	printf("%d", rows);
-	wmove (window, rows-1, 1);
-	wrefresh(window);
-//	rl_prep_terminal(1);
-	rl_callback_handler_install(">", (rl_vcpfunc_t*) &cb_linehandler);
+	move(rows-1,1);
+	refresh();
+	//rl_prep_terminal(1);
+	//rl_callback_handler_install(">", (rl_vcpfunc_t*) &cb_linehandler); 
+	//install_line_handler();
+
+	//rl_callback_handler_install(">", cb_linehandler);
 	running =1;
-	while (running)
+	while (!running)
 	{
 		usleep(1000);
 		rl_callback_read_char();
-		wmove(window, rows-1, 1);
-		wrefresh(window);
+		//printf(rl_line_buffer);
+		/* wmove(window, rows-1, 1); */ 
+		/* wrefresh(window); */
 	}
-	rl_callback_handler_remove();
+	//remove_line_handler();
 }
 
 void cb_linehandler (char *line) {
-  /* Can use ^D (stty eof) or `exit' to exit. */
+	/* rl_done=1; */
+	/* rl_set_prompt(">"); */
+	/* rl_redisplay(); */
+	/* return; */
   if (line == NULL || strcmp (line, "exit") == 0)
+  /* Can use ^D (stty eof) or `exit' to exit. */
     {
       if (line == 0)
         printf ("\n");
@@ -64,4 +71,8 @@ void cb_linehandler (char *line) {
       //printf ("input line: %s\n", line);
       free (line);
     }
+  	
+      move(rows-3, 7);
+      refresh();
 }
+

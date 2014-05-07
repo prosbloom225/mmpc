@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS=-g -c -Wall -Wint-conversion
-LDFLAGS= -lncurses -lpanel -lreadline -lmpdclient
-SOURCES= client.c commandMode.c
+CFLAGS=-g -c -Wall 
+LDFLAGS= -lncurses -lpanel -lreadline -lmpdclient /usr/local/lib/libreadline.a
+SOURCES= client.c commandMode.c io.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE= mmpc
 

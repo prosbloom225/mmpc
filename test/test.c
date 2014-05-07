@@ -1,64 +1,68 @@
-/*
- * =====================================================================================
- *
- *       Filename:  test.c
- *
- *    Description:  
- *
- *        Version:  1.0
- *        Created:  05/06/2014 08:17:14
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  YOUR NAME (), 
- *   Organization:  
- *
- * =====================================================================================
- */
-
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include <stdlib.h>  /* for free() */
-#include <unistd.h> /* for usleep() */
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <sys/select.h>
 
-char running = 1;  
 
-// The function that'll get passed each line of input
-void my_rlhandler(char* line);
-void my_rlhandler(char* line){
-  if(line==NULL){
-        // Ctrl-D will allow us to exit nicely
-    printf("\nNULLBURGER\n");
-    running = 0;
-  }else{
-    if(*line!=0){
-          // If line wasn't empty, store it so that uparrow retrieves it
-      add_history(line);
+    const* prompt = ">";
+    int running = 1;
+
+    void printlog(int c) {
+        char* saved_line;
+        int saved_point;
+        saved_point = rl_point;
+        saved_line = rl_copy_text(0, rl_end);
+        rl_set_prompt("");
+        rl_replace_line("", 0);
+        rl_redisplay();
+        //printf("Message: %d\n", c);
+        rl_set_prompt(prompt);
+        rl_replace_line(saved_line, 0);
+        rl_point = saved_point;
+        rl_redisplay();
+        free(saved_line);
     }
-    printf("Your input was:\n%s\n", line);
-    free(line);
-  }
+
+    void handle_line(char* ch) {
+        //printf("%s\n", ch);
+        add_history(ch);
+    }
+
+int io_handle_enter(int x, int y) {
+	char* line = NULL;
+
+	line = rl_copy_text(0, rl_end);
+	rl_set_prompt("");
+	rl_replace_line("", 0);
+	rl_redisplay();
+
+	//cmd_execute(line);
+
+	if (strcmp(line, "") != 0) {
+		add_history(line);
+	}
+	free(line);
+
+	//rl_set_prompt(prompt);
+	rl_redisplay();
+
+	/* force readline to think that the current line was "eaten" and executed */
+	rl_done = 1;
+	return 0;
 }
 
-// The main entry-point for the program
-int main()
-{
- const char *prompt = "WOOP> ";
+    int main() {
 
- // Install the handler
- rl_callback_handler_install(prompt, (rl_vcpfunc_t*) &my_rlhandler);
+        printf("Start.\n");
+	rl_bind_key(RETURN, io_handle_enter);
+        rl_callback_handler_install(prompt, handle_line);
 
- // Enter the event loop (simple example, so it doesn't do much except wait)
- running = 1;
- while(running){
-    usleep(10000);
-    rl_callback_read_char();
- };
- printf("\nEvent loop has exited\n");
-
- // Remove the handler
- rl_callback_handler_remove();
-
- return 0; // happy ending
-}
+        while (running) {
+            usleep(10);
+            rl_callback_read_char();
+        }
+        rl_callback_handler_remove();
+    }

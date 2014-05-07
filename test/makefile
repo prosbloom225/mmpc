@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-g -c -Wall -Wint-conversion
-LDFLAGS= -lncurses -lpanel -lreadline -lmpdclient
+CFLAGS=-g -c -Wall 
+LDFLAGS= -lncurses -lpanel -lreadline -lmpdclient /usr/local/lib/libreadline.a
 SOURCES= test.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE= a
@@ -15,4 +15,4 @@ $(EXECUTABLE): $(OBJECTS)
 
 
 clean:
-	rm *.o mmpc
+	rm *.o a
