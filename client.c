@@ -39,17 +39,19 @@ int connectToMpd();
 
 
 // DATA SEGMENT
-	WINDOW *clientWins[3];
-	PANEL  *clientPanels[3];
-	WINDOW *winCommandMode;
-	PANEL *panelCommandMode;
-	int rows, cols, x = 0, y = 0;
-	int running;
-	const char *prompt = "rltest$ ";
+WINDOW *clientWins[3];
+PANEL  *clientPanels[3];
+WINDOW *winCommandMode;
+PANEL *panelCommandMode;
+int rows, cols, x = 0, y = 0;
+int running;
+const char *prompt = "rltest$ ";
+
+
+struct mpd_connection * conn;
 // END DATA SEGMENT
 
 int main() {
-
 	initscr();
 	getmaxyx(stdscr,rows,cols);
 	cbreak();
@@ -71,6 +73,7 @@ int main() {
 	box(clientWins[2], 0, 0);
 	box(winCommandMode, 0, 0);
 
+
 	update_panels();
 	doupdate();
 
@@ -79,22 +82,9 @@ int main() {
 	printToWindow(clientWins[2], 0, 0, 20, "Playlist", COLOR_PAIR(1));
 	printToWindow(winCommandMode, 0, 0, 20, "CMD", COLOR_PAIR(1));
 
-	
-	mvwprintw(clientWins[2], 1, 1, "bTest");
-	wrefresh(clientWins[2]);
-
-	wmove (winCommandMode, 1, 1);
-	wprintw(winCommandMode, "<");
-	wrefresh(winCommandMode);
 	displayCmdLine(winCommandMode);
-	//test();
-	//openCommandMode(winCommandMode);
-	//io_init();
-	//rlread();
-	//char *out = io_getpass();
-	//io_message(out);
-	refresh();
 
+	connectToMpd();
 
 	// Pause
 	getch();
@@ -127,20 +117,27 @@ void printToWindow(WINDOW *win, int starty, int startx, int width, char *string,
 	refresh();
 }
 int connectToMpd() {
-	struct mpd_connection * conn;
 	conn = mpd_connection_new ("localhost", 6600, 0);
 
-    if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) 
-    {
+	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) 
+	{
 		mpd_connection_free(conn);
-		printf("Connection failed.\n");
-    }
-    else
-    {
-	    printf("Connection established.\n");
-    }
+		wclrtoeol(winCommandMode);
+		wmove(winCommandMode, 1, 1);
+		wprintw(winCommandMode, "Connection to mpd failed.");
+		wrefresh(winCommandMode);
+	}
+	else
+	{
+		wmove(winCommandMode, 1, 1);
+		wclrtoeol(winCommandMode);
+		wprintw(winCommandMode, "Connection to mpd established.");
+		wrefresh(winCommandMode);
+	}
+	mpd_run_play(conn);	
 
-
-	printf("End\n");
+		// Pause
+		getch();
 	return 0;
 }
+

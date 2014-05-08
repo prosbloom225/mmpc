@@ -1,24 +1,31 @@
-#ifndef __XC_IO_H__
-#define __XC_IO_H__
+/*
+ * =====================================================================================
+ *
+ *       Filename:  io.h
+ *
+ *    Description:  Header for io. Handles io interface
+ *
+ *        Version:  1.0
+ *        Created:  05/05/2014 20:03:04
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  Michael Osiecki
+ *
+ * =====================================================================================
+ */
+#ifndef IO_H
+#define IO_H
 
-#include <stdbool.h>
-
-void io_init();
-void io_deinit();
-void io_switch_debug();
-void io_nonblock_handle();
-void io_debug_set(bool st);
-bool io_debug_get();
+#include <ncurses.h>
 
 void io_prompt_set(char *prompt);
 const char* io_prompt_get();
+int io_handle_enter(int x, int y);
+void io_set_prompt(char* prompt);
+void handle_line(char* ch);
+void rl_redisplay_mod();
+char* displayCmdLine(WINDOW *win);
 
-void io_notification(const char* const fmt, ...);
-void io_error(const char* const fmt, ...);
-void io_message(const char* msg);
-void io_debug(const char * const fmt, ...);
-void io_printfln(const char* const fmt, ...);
 
-char* io_getpass();
-char* rlread();
 #endif
