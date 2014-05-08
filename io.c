@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <sys/select.h>
 
+#include "commands.h"
 
 WINDOW *winCommandMode;
 static char* prompt = ">";
@@ -74,6 +75,15 @@ void io_set_prompt(char* newPrompt) {
 	rl_redisplay();
 }
 
+int io_message(char* msg)
+{
+	wclrtoeol(winCommandMode);
+	wmove(winCommandMode, 1, 1);
+	wprintw(winCommandMode, msg);
+	wrefresh(winCommandMode);
+	// Pause
+	getch();
+}
 
 void handle_line(char* ch) {
 	//printf("%s\n", ch);
@@ -126,7 +136,8 @@ char* displayCmdLine(WINDOW *win){
 		usleep(10);
 		rl_callback_read_char();
 	}
-	return rl_line_buffer;
 	rl_callback_handler_remove();
+	handle_command(rl_line_buffer);
+	return rl_line_buffer;
 } 
 

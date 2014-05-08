@@ -26,7 +26,6 @@
 #include <mpd/client.h>
 #include <string.h>
 
-#include "commandMode.h"
 #include "io.h"
 
 #define Nrows 10
@@ -58,8 +57,8 @@ int main() {
 	//noecho();
 
 	clientWins[0] = newwin(rows/4, cols-2, y, x);
-	clientWins[1] = newwin(((rows/4)*3)-1, (cols-2)/3, y + (rows/4), x);
-	clientWins[2] = newwin(((rows/4)*3)-1, ((cols-2)/3)*2, y + (rows/4), x + (cols-2)/3);
+	clientWins[1] = newwin(((rows/4)*3)-2, (cols-2)/3, y + (rows/4), x);
+	clientWins[2] = newwin(((rows/4)*3)-2, ((cols-2)/3)*2, y + (rows/4), x + (cols-2)/3);
 	winCommandMode = newwin(rows, cols, rows-2, 0);
 	// Create panels
 	clientPanels[0] = new_panel(clientWins[0]);
@@ -71,7 +70,7 @@ int main() {
 	box(clientWins[0], 0, 0);
 	box(clientWins[1], 0, 0);
 	box(clientWins[2], 0, 0);
-	box(winCommandMode, 0, 0);
+	//box(winCommandMode, 0, 0);
 
 
 	update_panels();
@@ -80,7 +79,7 @@ int main() {
 	printToWindow(clientWins[0], 0, 0, 20, "Viz", COLOR_PAIR(1));
 	printToWindow(clientWins[1], 0, 0, 20, "Library", COLOR_PAIR(1));
 	printToWindow(clientWins[2], 0, 0, 20, "Playlist", COLOR_PAIR(1));
-	printToWindow(winCommandMode, 0, 0, 20, "CMD", COLOR_PAIR(1));
+	//printToWindow(winCommandMode, 0, 0, 20, "CMD", COLOR_PAIR(1));
 
 	displayCmdLine(winCommandMode);
 
@@ -122,22 +121,13 @@ int connectToMpd() {
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) 
 	{
 		mpd_connection_free(conn);
-		wclrtoeol(winCommandMode);
-		wmove(winCommandMode, 1, 1);
-		wprintw(winCommandMode, "Connection to mpd failed.");
-		wrefresh(winCommandMode);
+		io_message("Connection to mpd failed.");
 	}
 	else
 	{
-		wmove(winCommandMode, 1, 1);
-		wclrtoeol(winCommandMode);
-		wprintw(winCommandMode, "Connection to mpd established.");
-		wrefresh(winCommandMode);
+		io_message("Connection to mpd established.");
 	}
-	mpd_run_play(conn);	
-
-		// Pause
-		getch();
+	//mpd_run_play(conn);	
 	return 0;
 }
 
