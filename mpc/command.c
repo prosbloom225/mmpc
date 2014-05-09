@@ -19,13 +19,13 @@
  */
 
 #include "command.h"
-#include "charset.h"
-#include "options.h"
-#include "util.h"
-#include "args.h"
-#include "search.h"
-#include "status.h"
-#include "path.h"
+//#include "charset.h"
+//#include "options.h"
+//#include "util.h"
+//#include "args.h"
+//#include "search.h"
+//#include "status.h"
+//#include "path.h"
 #include "Compiler.h"
 
 #include <mpd/client.h>

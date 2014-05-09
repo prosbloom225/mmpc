@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "io.h"
+#include "mpdControl.h"
 
 #define Nrows 10
 #define NCOLS 40
@@ -83,7 +84,7 @@ int main() {
 
 	displayCmdLine(winCommandMode);
 
-	connectToMpd();
+	connectToMpd("localhost", 6600, 0);
 
 	// Pause
 	getch();
@@ -114,20 +115,5 @@ void printToWindow(WINDOW *win, int starty, int startx, int width, char *string,
 	wattroff(win, color);
 	update_panels();
 	refresh();
-}
-int connectToMpd() {
-	conn = mpd_connection_new ("localhost", 6600, 0);
-
-	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) 
-	{
-		mpd_connection_free(conn);
-		io_message("Connection to mpd failed.");
-	}
-	else
-	{
-		io_message("Connection to mpd established.");
-	}
-	//mpd_run_play(conn);	
-	return 0;
 }
 

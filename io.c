@@ -9,7 +9,6 @@
 #include <stdarg.h>
 #include <sys/select.h>
 
-#include "commands.h"
 
 WINDOW *winCommandMode;
 static char* prompt = ">";
@@ -83,6 +82,7 @@ int io_message(char* msg)
 	wrefresh(winCommandMode);
 	// Pause
 	getch();
+	return 0;
 }
 
 void handle_line(char* ch) {
