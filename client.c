@@ -27,14 +27,12 @@
 #include <string.h>
 
 #include "io.h"
-#include "mpdControl.h"
 
 #define Nrows 10
 #define NCOLS 40
 
 // HEADER
 void printToWindow(WINDOW *win, int starty, int startx, int width, char *string, chtype color); 	
-int connectToMpd(); 
 // END HEADER
 
 
@@ -84,7 +82,7 @@ int main() {
 
 	displayCmdLine(winCommandMode);
 
-	connectToMpd("localhost", 6600, 0);
+	//connectToMpd("localhost", 6600, 0);
 
 	// Pause
 	getch();

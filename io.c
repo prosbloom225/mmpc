@@ -137,7 +137,7 @@ char* displayCmdLine(WINDOW *win){
 		rl_callback_read_char();
 	}
 	rl_callback_handler_remove();
-	handle_command(rl_line_buffer);
+	//handle_command(rl_line_buffer);
 	return rl_line_buffer;
 } 
 
